@@ -12,6 +12,12 @@ l2 = LossArray(fill(L2DistLoss(),10,10))
 @test typeof(l1) <: LossArray{L2DistLoss,1}
 @test typeof(l2) <: LossArray{L2DistLoss,2}
 
+# 
+@test l2[10,10,100] == L2DistLoss()
+@test l2[10,10,100] == L2DistLoss()
+@test l2[10,10,100] == L2DistLoss()
+
+
 g0 = GenCPDecomp(cpd,L2DistLoss());
 g1 = GenCPDecomp(cpd,fill(L2DistLoss(),9));
 g2 = GenCPDecomp(cpd,fill(L2DistLoss(),9,10));

@@ -31,3 +31,10 @@ function Base.getindex{L,M}(A::LossArray{L,M},idx::Integer...)
     end
 end
 
+
+function sumvalue(
+        A::LossArray,
+        target::AbstractArray,
+        output::AbstractArray
+    )
+end
