@@ -1,9 +1,9 @@
-type GenCPDecomp{T<:Number,N,L<:Loss,M}
-    cpd::CPDecomp{T,N}
+type GenCPD{T<:Number,N,L<:Loss,M}
+    cpd::CPD{T,N}
     loss::Union{L,AbstractArray{L,M}}
 
-    GenCPDecomp(cpd::CPDecomp{T,N},l::L) = new(cpd,l)
-    function GenCPDecomp(cpd::CPDecomp{T,N},loss::AbstractArray{L,M})
+    GenCPD(cpd::CPD{T,N},l::L) = new(cpd,l)
+    function GenCPD(cpd::CPD{T,N},loss::AbstractArray{L,M})
         M > N && error("loss array has too many dimensions")
         for m = 1:M
             size(cpd,m) != size(loss,m) && error("loss array does not match cpd along dimension $m")
@@ -12,20 +12,28 @@ type GenCPDecomp{T<:Number,N,L<:Loss,M}
     end
 end
 
-function GenCPDecomp{T<:Number,N,L<:Loss,M}(
-        cpd::CPDecomp{T,N},
+function GenCPD{T<:Number,N,L<:Loss,M}(
+        cpd::CPD{T,N},
         loss::AbstractArray{L,M}
     )
-    return GenCPDecomp{T,N,L,M}(cpd,loss)
+    return GenCPD{T,N,L,M}(cpd,loss)
 end
 
-function GenCPDecomp{T<:Number,N,L<:Loss}(
-        cpd::CPDecomp{T,N},
+function GenCPD{T<:Number,N,L<:Loss}(
+        cpd::CPD{T,N},
         l::L
     )
-    return GenCPDecomp{T,N,L,0}(cpd,l)
+    return GenCPD{T,N,L,0}(cpd,l)
 end
 
+function GenCPD{T<:Number,N,L<:Loss}(
+        nr::Integer,
+        data::AbstractArray{T,N},
+        l::L
+    )
+    cpd = CPD(n)
+    return GenCPD{T,N,L,0}(cpd,l)
+end
 
 type GenCPDParams
     iterations::Integer

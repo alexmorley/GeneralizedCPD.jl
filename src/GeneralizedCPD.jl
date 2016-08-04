@@ -6,12 +6,13 @@ importall LearnBase
 @reexport using Losses
 import StatsBase: fit!
 
-export GenCPDecomp,
+export GenCPD,
        GenCPDParams,
        GenCPDFit,
        LossArray,
        fit!
 
+include("utils.jl")
 include("types.jl")
 # include("fit.jl")
 
