@@ -85,7 +85,7 @@ end
 end
 
 @generated function sumvalue{T,N}(
-        loss::SupervisedLoss,
+        loss::Loss,
         cpd::CPD{T,N},
         data::AbstractArray{T,N}
     )
@@ -93,12 +93,8 @@ end
     if size(cpd) != size(data)
         error("cpd and data dimensions don't match")
     end
-    $M > $N && error("loss array has more dimensions than data")
-    if size(loss) != size(cpd)[1:($M)]
-        error("loss array dimensions don't match data")
-    end
     z = zero(T)
-    @nloops $N i dest begin
+    @nloops $N i data begin
         t = @nref $N data i
         e = @nref $N cpd i
         z += value(loss,t,e)
@@ -121,7 +117,7 @@ end
         error("loss array dimensions don't match data")
     end
     z = zero(T)
-    @nloops $N i dest begin
+    @nloops $N i data begin
         l = @nref $M loss i
         t = @nref $N data i
         e = @nref $N cpd i
@@ -131,3 +127,37 @@ end
   end
 end
 
+sumvalue(model::GenCPD,data::AbstractArray) = sumvalue(model.loss,model.cpd,data)
+
+function grad{T,N}(
+        model::GenCPD{T,N},
+        data::AbstractArray{T,N},
+        n::Integer
+    )
+    
+    factors = model.cpd.factors
+
+    # form estimate of unfolded tensor
+    idx = [1:n-1; n+1:N]#[N:-1:n+1; n-1:-1:1]
+    B = reduce(krprod, factors[idx])            
+    est = A_mul_Bt(factors[n],B)
+
+    # unfold tensor along mode n 
+    xn = unfold(data,n)
+    deriv!(xn,model.loss,xn,est)
+
+    # compute gradient for factor n
+    return xn*B
+end
+
+# # form estimate of unfolded tensor
+# idx = [N:-1:n+1; n-1:-1:1]
+# B = reduce(krprod, factors[idx])            
+# est = A_mul_Bt(factors[n],B)
+
+# # unfold tensor along mode n 
+# xn = unfold(data,n)
+# deriv!(xn,model.loss,xn,est)
+
+# # compute gradient for factor n
+# ∇ = xn*B

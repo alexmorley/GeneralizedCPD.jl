@@ -1,67 +1,76 @@
+## Optimization Types ##
+type GenCPDParams
+    iterations::Integer
+    ftol::Float64
+end
+
+GenCPDParams(i=100,f=1e-6) = GenCPDParams(i,f)
+
+type GenCPDFit{T<:AbstractFloat}
+    iterations::Integer
+    trace::Vector{T}
+    objective::T
+    ∇norm::T
+    converged::Bool
+end
+
+## Alternating Gradient Descent ##
+
 function fit!{T,N}(
-        model::GenCPDecomp{T,N},
+        model::GenCPD{T,N},
         data::AbstractArray{T,N},
         opt::GenCPDParams = GenCPDParams()
     )
     
     cpd = model.cpd
+    nr = rank(cpd)
+    factors = cpd.factors
+    fill!(cpd.λ,one(T))
+    
     dims = size(cpd)
     dims != size(data) && error("cpd and data dimensions do not match.")
 
     ∇norm = 0.0 # todo, calculate this.
     converged = false # todo, convergence
-
-    R = rank(cpd)
     
-    # todo, think harder about transposing...
-    factors = [ transpose(F) for F in cpd.factors ]
-    ρ = ones(N)
-    fill!(cpd.λ)
+    # gradient step sizes
+    ρ = ones(T,N)
 
     # # todo, clever storage for gradient
     # maxI = maximum(dims)
     # ∇store = Array(T,R,maxI)
 
     # initial loss
-    f0 = sumvalue(cpd,data)
+    f = sumvalue(model,data)
+    fhist = [f]
 
     # optimization loop
-    for iter = 1:opt.iterations
+    iter = 1
+    while iter < opt.iterations
 
         for n = 1:N
 
-            # form estimate of unfolded tensor
-            idx = [N:-1:i + 1; i - 1:-1:1]
-            B = reduce(krprod, factors[idx])            
-            est = A_mul_Bt(factors[n],B)
+            # calculate gradient
+            ∇ = grad(model,data,n)
 
-            # unfold tensor along mode n 
-            xn = unfold(data,n)
-            deriv!(xn,model.loss,xn,est)
-
-            # compute gradient for factor n
-            ∇ = xn*B
+            @assert size(∇) == size(factors[n])
 
             # take gradient step
+            ρ[n] = 1.0
             axpy!(-ρ[n],∇,factors[n])
-            transpose!(cpd.factors[n],factors[n])
-            f = sumvalue(model.loss,cpd,data)
+            fnext = sumvalue(model,data)
 
             # backtracking linesearch
-            while (f-f0)>eps()
+            lsiter = 0
+            while (fnext-f)>eps()
                 s = ρ[n]*0.5
                 axpy!(s,∇,factors[n])
-                transpose!(cpd.factors[n],factors[n])
                 ρ[n] = ρ[n] - s
-                f = sumvalue(model.loss,cpd,data)
+                fnext = sumvalue(model,data)
+                lsiter += 1
+                lsiter > 1000 && break
             end
-
-            # renormalize factors
-            for r = 1:R
-                λr = norm(factors[n][:,r])
-                factors[n][:,r] ./= λr
-                cpd.λ[r] *= λr
-            end
+            f = fnext
 
             # todo:
             #   - preallocate space for B
@@ -78,12 +87,13 @@ function fit!{T,N}(
         end
 
         # todo, convergence
+        push!(fhist,f)
+        normalize!(cpd)
+        iter += 1
     end
 
-    # copy factors in CPD object
-    for n = 1:N
-        transpose!(cpd.factors[n],factors[n])
-    end
+    @show ρ
+    @show fhist
 
-    return GenCPDFit(n_iter,f,∇norm,converged)
+    return GenCPDFit(iter,fhist,f,∇norm,converged)
 end
