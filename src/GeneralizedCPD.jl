@@ -15,7 +15,10 @@ export GenCPD,
        GenCPDParams,
        GenCPDFit,
        LossArray,
-       fit!
+       fit!,
+       setparams!,
+       getparams,
+       nparams
 
 include("gen_cpd.jl")
 include("gradients.jl")

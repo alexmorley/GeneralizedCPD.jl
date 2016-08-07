@@ -29,7 +29,7 @@ end
       # allocate vector for parameters
       factdims = @ntuple $N (n)->(size(data,n),nr)
       x,factors = vecmats(T,factdims)
-      cpd = CPD(factors, ones(T,N))
+      cpd = CPD(factors, ones(T,nr))
       return GenCPD{T,N,L,0}(x,cpd,l)
     end
 end
@@ -39,4 +39,5 @@ function setparams!{T}(model::GenCPD{T},x::AbstractVector{T})
     copy!(model.paramvec,x)
 end
 getparams(model::GenCPD) = model.paramvec
+nparams(model::GenCPD) = length(model.paramvec)
 

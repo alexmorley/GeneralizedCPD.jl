@@ -20,8 +20,8 @@ model = GenCPD(nr,data,L2DistLoss())
 # for i = 1:3; copy!(model.cpd.factors[i],F[i]); end
 # fill!(model.cpd.λ,1.0)
 
-opt = GenCPDParams(30)
-result = fit!(model,data,opt)
+# opt = GenCPDParams(30)
+# result = fit!(model,data,opt)
 
-using Plots; unicodeplots();
-plot(result.trace; xaxis=("iterations"), yaxis=("error"))
+# using Plots; gr()
+# plot(result.trace; xaxis=("iterations"), yaxis=("error"))
