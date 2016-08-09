@@ -2,9 +2,15 @@
 type GenCPDParams
     iterations::Integer
     ftol::Float64
-end
 
-GenCPDParams(i=100,f=1e-6) = GenCPDParams(i,f)
+    # default parameters
+    function GenCPDParams(
+            i::Integer=100,
+            f::Float64=1e-6
+        )
+        new(i,f)
+    end
+end
 
 type GenCPDFit{T<:AbstractFloat}
     iterations::Integer

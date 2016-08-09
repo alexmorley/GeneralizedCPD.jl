@@ -11,17 +11,31 @@ F = [ randn(sz[n],nr) for n in 1:N ]
 @einsum X[i,j,k] := F[1][i,r]*F[2][j,r]*F[3][k,r]
 
 # add noise
-ξ = zeros(sz)#0.1*randn(sz)
-data = X + ξ
-#data = zeros(sz)
+ξ = zeros(sz)
+const data = X + ξ
 
-# fit model
-model = GenCPD(nr,data,L2DistLoss())
-# for i = 1:3; copy!(model.cpd.factors[i],F[i]); end
-# fill!(model.cpd.λ,1.0)
+# model
+const model = GenCPD(nr,data,L2DistLoss())
 
-# opt = GenCPDParams(30)
-# result = fit!(model,data,opt)
+# objective function, autodiff gradients
+using ForwardDiff
+f(x) =  sumvalue(model,x,data);
+g!(x,∇) = ForwardDiff.gradient!(∇,f,x)
 
-# using Plots; gr()
-# plot(result.trace; xaxis=("iterations"), yaxis=("error"))
+# use Optim to fit
+using Optim
+x0 = randn(nparams(model))
+result = optimize(f,g!,x0;store_trace=true)
+
+# plot trace
+using Plots; gr()
+tr = Optim.trace(result)
+iter = [ t.iteration for t in tr.states ]
+obj = [ t.value for t in tr.states ]
+∇nrm = [ t.gradnorm for t in tr.states ]
+
+plot(
+    plot(iter,obj,xaxis=("iteration"),yaxis=("objective",:log)),
+    plot(iter,∇nrm,xaxis=("iteration"),yaxis=("norm of gradient",:log)),
+    legend=(nothing)
+)
