@@ -74,6 +74,10 @@ getparams(model::GenCPD) = model.paramvec
 nparams(model::GenCPD) = length(model.paramvec)
 Base.size(model::GenCPD) = size(model.cpd)
 
+Base.randn!{T<:AbstractFloat}(model::GenCPD{T}) = randn!(model.cpd) 
+Base.rand!{T<:AbstractFloat}(model::GenCPD{T}) = rand!(model.cpd) 
+
+
 """
     sumvalue(model::GenCPD, data)
 

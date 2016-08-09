@@ -1,3 +1,35 @@
+function grad{T,N}(
+        model::GenCPD{T,N},
+        data::AbstractArray{T,N},
+        n::Integer
+    )
+    
+    factors = model.cpd.factors
+
+    # form estimate of unfolded tensor
+    idx = [N:-1:n+1; n-1:-1:1]
+    B = reduce(krprod, factors[idx])            
+    est = A_mul_Bt(factors[n],B)
+
+    # unfold tensor along mode n 
+    xn = unfold(data,n)
+    deriv!(xn,model.loss,xn,est)
+
+    # compute gradient for factor n
+    return xn*B
+end
+
+@generated function grad{T,N}(
+        model::GenCPD{T,N},
+        data::AbstractArray{T,N}
+    )
+    quote
+    ∇ = @ntuple($N, (n)->(vec(grad(model,data,n))))
+    vcat(∇...)
+    end
+end
+
+
 # @generated function value!{T,N}(
 #         dest::AbstractArray{T,N},
 #         loss::Loss,
@@ -84,28 +116,6 @@
 #   end
 # end
 
-
-
-# function grad{T,N}(
-#         model::GenCPD{T,N},
-#         data::AbstractArray{T,N},
-#         n::Integer
-#     )
-    
-#     factors = model.cpd.factors
-
-#     # form estimate of unfolded tensor
-#     idx = [1:n-1; n+1:N]#[N:-1:n+1; n-1:-1:1]
-#     B = reduce(krprod, factors[idx])            
-#     est = A_mul_Bt(factors[n],B)
-
-#     # unfold tensor along mode n 
-#     xn = unfold(data,n)
-#     deriv!(xn,model.loss,xn,est)
-
-#     # compute gradient for factor n
-#     return xn*B
-# end
 
 # # form estimate of unfolded tensor
 # idx = [N:-1:n+1; n-1:-1:1]

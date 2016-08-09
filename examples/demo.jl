@@ -1,18 +1,12 @@
-using Einsum
 using GeneralizedCPD
 
 # data parameters
 nr = 2          # rank
 sz = (15,16,17) # dimensions
-N  = length(sz)
 
 # create low-rank data
-F = [ randn(sz[n],nr) for n in 1:N ]
-@einsum X[i,j,k] := F[1][i,r]*F[2][j,r]*F[3][k,r]
-
-# add noise
-ξ = zeros(sz)
-const data = X + ξ
+ξ = 0.1*randn(sz) # noise
+const data = cpd_randn(sz,nr) + ξ
 
 # model
 const model = GenCPD(nr,data,L2DistLoss())

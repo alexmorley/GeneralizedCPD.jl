@@ -9,6 +9,7 @@ import StatsBase: fit!
 using Reexport
 @reexport using TensorBase
 @reexport using Losses
+@reexport using Distributions
 
 export GenCPD,
        GenCPDParams,
@@ -17,10 +18,11 @@ export GenCPD,
        fit!,
        setparams!,
        getparams,
-       nparams
+       nparams,
+       grad
 
 include("gen_cpd.jl")
-# include("gradients.jl")
+include("gradients.jl")
 # include("fit.jl")
 
 end # module
