@@ -3,6 +3,19 @@
 
 Creates a Generalized Canonical Polyadic Decomposition (CPD) model with specified
 rank (an integer), data (a tensor), and loss.
+
+**Functions to evaluate objective function:**
+
+    sumvalue(model, data)       # eval objective with current params
+    sumvalue(model, x, data)    # eval objective with params `x`
+    sumvalue!(model, x, data)   # overwrite model with params `x` then eval objective
+
+**Functions to evaluate gradients:**
+
+    grad(model, data)       # eval gradient with current params
+    grad(model, x, data)    # eval gradient with params `x`
+    grad!(model, x, data)   # overwrite model with params `x` then eval gradient
+
 """
 immutable GenCPD{T,N,L<:Loss,M}
     paramvec::Vector{T}
@@ -31,15 +44,15 @@ end
       factdims = @ntuple $N (n)->(size(data,n),nr)
       
       # calculate total number of parameters
-      np = nr
+      np = 0
       @nexprs $N (n)->np += prod(factdims[n])
 
-      # allocate paramvec and split/create views into paramvec
+      # allocate paramvec and create factors as views into it
       x = Array(T,np)
-      factors,λ = splitview(x,factdims)
+      factors, = splitview(x,factdims)
 
       # create CPD and return
-      cpd = CPD(factors,λ)
+      cpd = CPD(factors,ones(T,nr))
       return GenCPD{T,N,L,0}(x,factdims,cpd,l)
     end
 end
@@ -50,80 +63,26 @@ function GenCPD{Tx,T,N,L,M}(
         gencp::GenCPD{T,N,L,M}
     )
     # create views into x as factors
-    factors,λ = splitview(x,gencp.factdims)
+    factors, = splitview(x,gencp.factdims)
+    λ = ones(Tx,rank(gencp))
 
     # create CPD and return
     cpd = CPD(factors,λ)
     return GenCPD{Tx,N,L,M}(x,gencp.factdims,cpd,gencp.loss)
 end
 
-## Getting/Setting parameters ##
-function sumvalue(model::GenCPD, x::AbstractVector, data::AbstractArray)
-  tmp = GenCPD(x,model)
-  setparams!(tmp,x)
-  sumvalue(tmp,data)
-end
+## Convienence functions ##
+Base.size(model::GenCPD) = size(model.cpd)
+Base.rank(model::GenCPD) = rank(model.cpd)
 
-function setparams!(model::GenCPD,x::AbstractVector)
-    copy!(model.paramvec,x)
-end
-# Base.randn!(model::GenCPD) = randn!(model.paramvec)
-# Base.rand!(model::GenCPD) = rand!(model.paramvec)
+Base.randn!{T<:AbstractFloat}(model::GenCPD{T}) = randn!(model.paramvec) 
+Base.rand!{T<:AbstractFloat}(model::GenCPD{T}) = rand!(model.paramvec)
 
+## get and set model params through paramvec ##
 getparams(model::GenCPD) = model.paramvec
 nparams(model::GenCPD) = length(model.paramvec)
-Base.size(model::GenCPD) = size(model.cpd)
 
-Base.randn!{T<:AbstractFloat}(model::GenCPD{T}) = randn!(model.cpd) 
-Base.rand!{T<:AbstractFloat}(model::GenCPD{T}) = rand!(model.cpd) 
-
-
-"""
-    sumvalue(model::GenCPD, data)
-
-Computes objective function for Generalized CPD model with current parameters.
-"""
-sumvalue(model::GenCPD,data::AbstractArray) = sumvalue(model.loss,model.cpd,data)
-
-@generated function sumvalue{T,N}(
-        loss::Loss,
-        cpd::CPD{T,N},
-        data::AbstractArray
-    )
-  quote
-    if size(cpd) != size(data)
-        error("cpd and data dimensions don't match")
-    end
-    z = zero(T)
-    @nloops $N i data begin
-        t = @nref $N data i
-        e = @nref $N cpd i
-        z += value(loss,t,e)
-    end
-    return z
-  end
-end
-
-@generated function sumvalue{L<:Loss,T,N}(
-        loss::AbstractArray{L},
-        cpd::CPD{T,N},
-        data::AbstractArray
-    )
-  quote
-    if size(cpd) != size(data)
-        error("cpd and data dimensions don't match")
-    end
-    ndims(loss) > ndims(data) && error("loss array has more dimensions than data")
-    if size(loss) != size(cpd)[1:ndims(loss)]
-        error("loss array dimensions don't match data")
-    end
-    z = zero(T)
-    @nloops $N i data begin
-        l = @nref $M loss i
-        t = @nref $N data i
-        e = @nref $N cpd i
-        z += value(l,t,e)
-    end
-    return z
-  end
-end
+function setparams!{T}(model::GenCPD{T},x::AbstractVector)
+    copy!(model.paramvec,x)
+    fill!(model.cpd.λ, one(T))
+end 

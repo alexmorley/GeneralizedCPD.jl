@@ -13,7 +13,7 @@ const model = GenCPD(nr,data,L2DistLoss())
 
 # objective function, autodiff gradients
 using ForwardDiff
-f(x) =  sumvalue(model,x,data);
+f(x) = sumvalue(model,x,data)
 g!(x,∇) = ForwardDiff.gradient!(∇,f,x)
 
 # use Optim to fit

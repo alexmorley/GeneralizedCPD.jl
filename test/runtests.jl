@@ -31,15 +31,29 @@ using ForwardDiff
         ξ = 0.1*randn(sz) # noise
         data = full(cpd_randn(sz,nr)) + ξ
         model = GenCPD(nr,data,L1DistLoss())
+        fill!(model.cpd.λ,1.0)
 
-        # objective function, autodiff gradients
+        # init model, define objective
         randn!(model)
-        f(x) =  sumvalue(model,x,data);
-        ∇a = ForwardDiff.gradient(f,getparams(model))[1:(end-nr)]
+        f(x) = sumvalue(model,x,data);
+        
+        # check gradients vs ForwardDiff
+        ∇a = ForwardDiff.gradient(f,getparams(model))
         ∇b = grad(model,data)
-
-        # test that ForwardDiff and manual calculation are the same
         @test isapprox(∇a,∇b)
+
+        # similar checks
+        xinit = copy(getparams(model))
+        x = randn(nparams(model))
+        ∇a = ForwardDiff.gradient(f,x)
+        ∇b = grad(model,x,data)
+        @test isapprox(∇a,∇b)
+        @test isapprox(xinit,getparams(model))
+        
+        # check that grad! overwrites
+        ∇c = grad!(model,x,data)
+        @test isapprox(∇a,∇c)
+        @test isapprox(x,getparams(model))
     end
 end
 

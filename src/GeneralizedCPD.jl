@@ -1,3 +1,10 @@
+"""
+# Generalized Canonical Polyadic Decomposition (GCPD)
+
+Alex H. Williams¹, Tamara G. Kolda²\n
+ ¹ Stanford University, Stanford, CA\n
+ ² Sandia National Laboratories, Livermore, CA\n
+"""
 module GeneralizedCPD
 
 using Base.Cartesian
@@ -22,6 +29,7 @@ export GenCPD,
        grad
 
 include("gen_cpd.jl")
+include("sumvalue.jl")
 include("gradients.jl")
 # include("fit.jl")
 
