@@ -9,17 +9,8 @@ sz = (15,16,17) # dimensions
 const data = cpd_randn(sz,nr) + ξ
 
 # model
-const model = GenCPD(nr,data,L2DistLoss())
-
-# objective function, autodiff gradients
-using ForwardDiff
-f(x) = sumvalue(model,x,data)
-g!(x,∇) = ForwardDiff.gradient!(∇,f,x)
-
-# use Optim to fit
-using Optim
-x0 = randn(nparams(model))
-result = optimize(f,g!,x0;store_trace=true)
+const model = GenCPD(data, nr, L2DistLoss())
+result = fit!(model, data, LBFGS(); store_trace=true)
 
 # plot trace
 using Plots; gr()

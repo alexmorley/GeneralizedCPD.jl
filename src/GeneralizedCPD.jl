@@ -12,6 +12,9 @@ using Base.LinAlg
 using CatViews
 
 import StatsBase: fit!
+using Optim
+
+export LBFGS
 
 using Reexport
 @reexport using TensorBase
@@ -31,6 +34,6 @@ export GenCPD,
 include("gen_cpd.jl")
 include("sumvalue.jl")
 include("gradients.jl")
-# include("fit.jl")
+include("fit.jl")
 
 end # module

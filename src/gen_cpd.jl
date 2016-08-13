@@ -1,16 +1,48 @@
 """
-    GenCPD(rank,data,loss)
+    GenCPD(data, nr, loss)
 
 Creates a Generalized Canonical Polyadic Decomposition (CPD) model with specified
-rank (an integer), data (a tensor), and loss.
+rank (an integer), data (a tensor), and loss (either a SupervisedLoss).
 
-**Functions to evaluate objective function:**
+#### To specify a model:
+
+A rank `nr` generalized CPD model with `loss` specifying loss function(s).
+
+    model = GenCPD(data, nr, loss)
+
+The dimensions of the model and the data type (e.g. `Float64`) match the data
+tensor. The `loss` should be either a `SupervisedLoss` or an `Array` of 
+SupervisedLosses. Common losses include (see `Losses.jl` package for more):
+
+    * `L2DistLoss()`, quadratic error
+    * `L1DistLoss()`, linear error
+    * `LogitMarginLoss()`, common loss for binary data
+    * `HingeLoss()`, another loss for binary data
+    * `PoissonLoss()`, common loss for count data
+    * `HuberLoss()`, robust loss
+
+If `loss` is an `Array`, then the number of dimensions should be less than or
+equal to the `data` tensor, and the sizes of these dimensions should match
+`data`.
+
+#### To optimize model parameters:
+
+After specifying the model, you can fit the parameters by:
+
+    fit!(model, data, ::Optimizer, ::OptimizationOptions)
+
+The Optimizer can be:
+  - any Optim.jl solver, e.g. LBFGS(), GradientDescent()
+  - any Optimizer implemented in this package:
+    * AltGradientDescent(), alternating gradient descent
+
+#### Functions to evaluate objective function:
 
     sumvalue(model, data)       # eval objective with current params
     sumvalue(model, x, data)    # eval objective with params `x`
     sumvalue!(model, x, data)   # overwrite model with params `x` then eval objective
 
-**Functions to evaluate gradients:**
+#### Functions to evaluate gradients:
 
     grad(model, data)       # eval gradient with current params
     grad(model, x, data)    # eval gradient with params `x`
@@ -35,8 +67,8 @@ end
 
 ## Constructors ##
 @generated function GenCPD{T<:Number,N,L<:Loss}(
-        nr::Integer,
         data::AbstractArray{T,N},
+        nr::Integer,
         l::L
     )
     quote
