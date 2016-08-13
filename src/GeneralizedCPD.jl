@@ -13,8 +13,12 @@ using CatViews
 
 import StatsBase: fit!
 using Optim
+using ProgressMeter
 
-export LBFGS
+# export Optimizers
+export GradientDescent,
+       LBFGS,
+       AltGradDescent
 
 using Reexport
 @reexport using TensorBase
@@ -34,6 +38,7 @@ export GenCPD,
 include("gen_cpd.jl")
 include("sumvalue.jl")
 include("gradients.jl")
+include("utils.jl")
 include("fit.jl")
 
 end # module

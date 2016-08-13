@@ -46,7 +46,7 @@ end
         data::AbstractArray{T,N}
     )
     quote
-    F, = splitview(∇,model.factdims)
+    F, = splitview(∇,model.fdims)
     @nexprs $N n->(grad!(F[n],model,data,n))
     return ∇
     end

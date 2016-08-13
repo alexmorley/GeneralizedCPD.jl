@@ -49,9 +49,11 @@ The Optimizer can be:
     grad!(model, x, data)   # overwrite model with params `x` then eval gradient
 
 """
-immutable GenCPD{T,N,L<:Loss,M}
+type GenCPD{T,N,L<:Loss,M}
     paramvec::Vector{T}
-    factdims::NTuple{N,Tuple{Int,Int}}
+    fdims::NTuple{N,Tuple{Int,Int}}
+    fstart::NTuple{N,Int}
+    fstop::NTuple{N,Int}
     cpd::CPD{T,N}
     loss::Union{L,AbstractArray{L,M}}
 
@@ -69,39 +71,47 @@ end
 @generated function GenCPD{T<:Number,N,L<:Loss}(
         data::AbstractArray{T,N},
         nr::Integer,
-        l::L
+        loss::L
     )
     quote
       # tuple of dimensions of factor matrices
-      factdims = @ntuple $N (n)->(size(data,n),nr)
+      fdims = @ntuple $N (n)->(size(data,n),nr)
       
       # calculate total number of parameters
       np = 0
-      @nexprs $N (n)->np += prod(factdims[n])
+      @nexprs $N (n)->np += prod(fdims[n])
 
       # allocate paramvec and create factors as views into it
       x = Array(T,np)
-      factors, = splitview(x,factdims)
+      factors,fstart,fstop = splitview(x,fdims)
 
       # create CPD and return
       cpd = CPD(factors,ones(T,nr))
-      return GenCPD{T,N,L,0}(x,factdims,cpd,l)
+      return GenCPD{T,N,L,0}(x, fdims, fstart, fstop, cpd, loss)
     end
 end
 
-## CPD with params x, copy dimensions and rank from other model
-function GenCPD{Tx,T,N,L,M}(
-        x::AbstractVector{Tx},
-        gencp::GenCPD{T,N,L,M}
-    )
-    # create views into x as factors
-    factors, = splitview(x,gencp.factdims)
-    λ = ones(Tx,rank(gencp))
+# ## CPD with params x, copy dimensions and rank from other model
+# @generated function GenCPD{Tx,T,N,L,M}(
+#         paramvec::AbstractVector{Tx},
+#         model::GenCPD{T,N,L,M}
+#     ) 
+#     # create views into x as factors
+#     factors = splitview(paramvec, model.fdims)
+#     λ = ones(Tx, rank(model))
 
-    # create CPD and return
-    cpd = CPD(factors,λ)
-    return GenCPD{Tx,N,L,M}(x,gencp.factdims,cpd,gencp.loss)
-end
+#     # create CPD and return
+#     cpd = CPD(factors,λ)
+#     return GenCPD{Tx,N,L,M}(paramvec, model.fdims, model.fstart,
+#                           model.fstop, cpd, model.loss)
+# end
+
+"""
+    factor_view(gencpd, n)
+
+Returns a contiguous view into `gencpd.paramvec` that holds factor matrix `n`.
+"""
+@inline factor_view(model::GenCPD, n::Integer) = view(model.paramvec, model.fstart[n]:model.fstop[n])
 
 ## Convienence functions ##
 Base.size(model::GenCPD) = size(model.cpd)
@@ -114,7 +124,12 @@ Base.rand!{T<:AbstractFloat}(model::GenCPD{T}) = rand!(model.paramvec)
 getparams(model::GenCPD) = model.paramvec
 nparams(model::GenCPD) = length(model.paramvec)
 
-function setparams!{T}(model::GenCPD{T},x::AbstractVector)
-    copy!(model.paramvec,x)
-    fill!(model.cpd.λ, one(T))
+@generated function setparams!{T,N}(model::GenCPD{T,N}, x::AbstractVector)
+  quote
+    model.cpd.factors = @ntuple $N (n)-> reshape(view(x, model.fstart[n]:model.fstop[n]), model.fdims[n])
+  end
 end 
+
+# function setparams!{T}(model::GenCPD{T},x::AbstractVector)
+#     copy!(model.paramvec,x)
+# end 

@@ -2,22 +2,23 @@ using GeneralizedCPD
 
 # data parameters
 nr = 2          # rank
-sz = (15,16,17) # dimensions
+sz = (50,60,70) # dimensions
 
 # create low-rank data
-ξ = 0.1*randn(sz) # noise
+ξ = 1e-6*randn(sz) # noise
 const data = cpd_randn(sz,nr) + ξ
 
 # model
 const model = GenCPD(data, nr, L2DistLoss())
+randn!(model)
 result = fit!(model, data, LBFGS(); store_trace=true)
 
 # plot trace
 using Plots; gr()
 tr = Optim.trace(result)
-iter = [ t.iteration for t in tr.states ]
-obj = [ t.value for t in tr.states ]
-∇nrm = [ t.gradnorm for t in tr.states ]
+iter = [ t.iteration for t in tr ]
+obj = [ t.value for t in tr ]
+∇nrm = [ t.g_norm for t in tr ]
 
 plot(
     plot(iter,obj,xaxis=("iteration"),yaxis=("objective",:log)),
