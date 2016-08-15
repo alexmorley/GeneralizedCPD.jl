@@ -1,17 +1,3 @@
-function fakedata{N,Ix<:Integer}(
-        sz::NTuple{N,Ix},
-        nr::Integer,
-        loss::SupervisedLoss
-    )
-
-    # create random low-rank tensor
-    cpd = cpd_randn(sz,nr)
-
-    # add appropriate noise
-    error("not done")
-end
-
-
 function default_opt_options(;
         x_tol::Real = 1e-32,
         f_tol::Real = 1e-10,
