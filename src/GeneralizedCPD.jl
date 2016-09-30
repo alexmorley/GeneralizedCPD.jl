@@ -33,7 +33,8 @@ export GenCPD,
        setparams!,
        getparams,
        nparams,
-       grad
+       grad,
+       sumvalue!
 
 include("gen_cpd.jl")
 include("sumvalue.jl")
