@@ -90,6 +90,7 @@ function grad!{T,N}(
 
     # form estimate of unfolded tensor
     idx = [N:-1:n+1; n-1:-1:1]
+
     B = reduce(krprod, factors[idx])            
     est = A_mul_Bt(factors[n],B)
 
@@ -100,4 +101,13 @@ function grad!{T,N}(
     # compute gradient for factor n
     A_mul_B!(∇,xn,B)
     return ∇
+end
+
+function grad!{T,N}(
+        ∇::AbstractVector{T},
+        model::GenCPD{T,N},
+        data::AbstractArray{T,N},
+        n::Integer
+    )
+    grad!(reshape(∇,size(model,n),rank(model)), model, data, n)
 end

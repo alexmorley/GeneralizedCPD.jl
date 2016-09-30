@@ -115,6 +115,7 @@ Returns a contiguous view into `gencpd.paramvec` that holds factor matrix `n`.
 
 ## Convienence functions ##
 Base.size(model::GenCPD) = size(model.cpd)
+Base.size(model::GenCPD, i) = size(model.cpd, i)
 Base.rank(model::GenCPD) = rank(model.cpd)
 
 Base.randn!{T<:AbstractFloat}(model::GenCPD{T}) = randn!(model.paramvec) 
@@ -128,6 +129,10 @@ nparams(model::GenCPD) = length(model.paramvec)
   quote
     model.cpd.factors = @ntuple $N (n)-> reshape(view(x, model.fstart[n]:model.fstop[n]), model.fdims[n])
   end
+end 
+
+function setparams!{T,N}(model::GenCPD{T,N}, x::AbstractVector, n::Integer)
+    copy!(model.cpd.factors[n], reshape(x, model.fdims[n]))
 end 
 
 # function setparams!{T}(model::GenCPD{T},x::AbstractVector)

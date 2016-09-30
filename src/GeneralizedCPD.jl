@@ -13,7 +13,7 @@ using CatViews
 
 import StatsBase: fit!
 using Optim
-using ProgressMeter
+import ProgressMeter
 
 # export Optimizers
 export GradientDescent,
