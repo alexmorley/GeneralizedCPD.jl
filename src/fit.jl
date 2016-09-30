@@ -38,7 +38,7 @@ end
 ## ---- Custom Optimizers ---- ##
 
 # An optimizer that only knows how to fit GenCPD
-abstract GenCPDOptimizer <: Optim.Optimizer
+abstract GenCPDOptimizer
 
 ## ---- Alternating Gradient Descent ---- ##
 
@@ -83,22 +83,28 @@ AltGradDescent(
     )
     dfunc = @ntuple $N n->DifferentiableFunction(f[n],g![n],fg![n])
 
-    gd = GradientDescent()
-    s = @ntuple $N n->Optim.initial_state(gd, o, dfunc[n], x[n])
+    # gd = @ntuple $N n->GradientDescent()
+    # s = @ntuple $N n->Optim.initial_state(gd[n], o, dfunc[n], x[n])
 
+    tr = Float64[]
     for iter = 1:10
         @show iter
         for n = 1:($N)
-            Optim.update_g!(dfunc[n], s[n], gd)
-            Optim.update_state!(dfunc[n], s[n], gd)
+            @show n
+            # Optim.update_state!(dfunc[n], s[n], gd[n]) && break
+            # Optim.update_g!(dfunc[n], s[n], gd[n]) 
+            # copy!(x[n], s[n].x)
+
+            result = optimize(dfunc[n], x[n], GradientDescent(), o)
+            copy!(x[n], result.minimum)
+            
+            # TODO - check if necessary
+            setparams!(model, x[n], n)
         end
+        push!(tr,sumvalue(model,data))
     end
 
-    for n = 1:($N)
-        setparams!(model, x[n], n)
-    end
-
-    return model
+    return tr
   end # quote
 
 end

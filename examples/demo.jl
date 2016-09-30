@@ -12,7 +12,7 @@ const data = cpd_randn(sz,nr) + ξ
 # model
 const model = GenCPD(data, nr, L2DistLoss())
 randn!(model)
-result = fit!(model, data, AltGradDescent(), OptimizationOptions(show_trace=true, store_trace=true))
+tr = fit!(model, data, AltGradDescent(), OptimizationOptions(iterations=10,show_trace=true, store_trace=true))
 
 # plot trace
 using Plots; gr()
