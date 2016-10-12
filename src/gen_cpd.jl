@@ -75,7 +75,7 @@ end
     )
     quote
       # tuple of dimensions of factor matrices
-      fdims = @ntuple $N (n)->(size(data,n),nr)
+      fdims = @ntuple $N (n)->(nr,size(data,n))
       
       # calculate total number of parameters
       np = 0
@@ -127,7 +127,7 @@ nparams(model::GenCPD) = length(model.paramvec)
 
 @generated function setparams!{T,N}(model::GenCPD{T,N}, x::AbstractVector)
   quote
-    model.cpd.factors = @ntuple $N (n)-> reshape(view(x, model.fstart[n]:model.fstop[n]), model.fdims[n])
+    @nexprs $N n->copy!(model.cpd.factors[n], reshape(x[model.fstart[n]:model.fstop[n]], model.fdims[n]))
   end
 end 
 
