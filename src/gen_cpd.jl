@@ -106,7 +106,3 @@ function setparams!{T,N}(model::GenCPD{T,N}, x::AbstractVector, n::Integer)
 end
 
 getparams{T,N}(model::GenCPD{T,N}, n::Integer) = view(model.paramvec, model.fstart[n]:model.fstop[n])
-
-# function setparams!{T}(model::GenCPD{T},x::AbstractVector)
-#     copy!(model.paramvec,x)
-# end 

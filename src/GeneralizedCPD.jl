@@ -14,7 +14,6 @@ using CatViews
 import StatsBase: fit!
 using StatsFuns
 using Optim
-import ProgressMeter
 using Parameters
 
 # export Optimizers
