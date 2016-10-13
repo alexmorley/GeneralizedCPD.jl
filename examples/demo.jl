@@ -1,5 +1,4 @@
 using GeneralizedCPD
-using Optim
 
 # data parameters
 nr = 2          # rank

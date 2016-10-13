@@ -42,37 +42,59 @@ function fit!{T,N,O}(
         model::GenCPD{T,N},
         data::AbstractArray{T,N},
         meta::AlternatingDescent{O},
-        options::OptimizationOptions = OptimizationOptions()
+        options::OptimizationOptions = OptimizationOptions(f_tol=1e-5)
     )
     
     dfunc = _decompose_objective(model, data)
 
     if options.store_trace
         tr = OptimizationState{O}[]
-        meta.options.store_trace = true
     end
 
-    tr = zeros(options.iterations)
+    f_x = sumvalue(model,data) # holds objective
+    converged = false
+
     for iter = 1:options.iterations
-        
-        ∇nrm = 0.0
-        converged = true
-        
+        xprev = copy(getparams(model))
+        f_x_prev = f_x
+        @show f_x
         for n = 1:N
-            tic()
             result = optimize(dfunc[n], copy(getparams(model,n)), meta.optimizer, meta.options)
-            converged = converged && Optim.converged(result) && Optim.iterations(result)==1
-            toc()
-            # TODO - remove this check?
-            @assert isapprox(getparams(model,n), result.minimum)
+            # # TODO - remove this check?
+            # @assert isapprox(getparams(model,n), result.minimum)
+            f_x = Optim.minimum(result)
         end
-        @show sumvalue(model,data)
-        push!(tr,sumvalue(model,data))
+
+        x_converged,f_converged,converged = assess_convergence(getparams(model), xprev, f_x, f_x_prev, options.x_tol, options.f_tol)
         converged && break
     end
 
     return converged,tr
 
+end
+
+####
+# 
+function assess_convergence(x::AbstractArray,
+                            x_previous::AbstractArray,
+                            f_x::Real,
+                            f_x_previous::Real,
+                            x_tol::Real,
+                            f_tol::Real)
+    x_converged, f_converged = false, false
+
+    if Optim.maxdiff(x, x_previous) < x_tol
+        x_converged = true
+    end
+
+    # Relative Tolerance
+    if abs(f_x - f_x_previous) / (abs(f_x) + f_tol) < f_tol || nextfloat(f_x) >= f_x_previous
+        f_converged = true
+    end
+
+    converged = x_converged || f_converged
+
+    return x_converged, f_converged, converged
 end
 
 ####

@@ -68,7 +68,7 @@ type GenCPD{T,N,L<:Loss,M}
 end
 
 ## Constructors ##
-@generated function GenCPD{T<:Number,N,L<:Loss}(
+@generated function GenCPD{T<:AbstractFloat,N,L<:Loss}(
         data::AbstractArray{T,N},
         nr::Integer,
         loss::L
@@ -87,31 +87,10 @@ end
 
       # create CPD and return
       cpd = CPD(factors,ones(T,nr))
+      randn!(x) # initialize params to non-zero
       return GenCPD{T,N,L,0}(x, fdims, fstart, fstop, cpd, loss)
     end
 end
-
-# ## CPD with params x, copy dimensions and rank from other model
-# @generated function GenCPD{Tx,T,N,L,M}(
-#         paramvec::AbstractVector{Tx},
-#         model::GenCPD{T,N,L,M}
-#     ) 
-#     # create views into x as factors
-#     factors = splitview(paramvec, model.fdims)
-#     λ = ones(Tx, rank(model))
-
-#     # create CPD and return
-#     cpd = CPD(factors,λ)
-#     return GenCPD{Tx,N,L,M}(paramvec, model.fdims, model.fstart,
-#                           model.fstop, cpd, model.loss)
-# end
-
-"""
-    factor_view(gencpd, n)
-
-Returns a contiguous view into `gencpd.paramvec` that holds factor matrix `n`.
-"""
-@inline factor_view(model::GenCPD, n::Integer) = view(model.paramvec, model.fstart[n]:model.fstop[n])
 
 ## Convienence functions ##
 Base.size(model::GenCPD) = size(model.cpd)
