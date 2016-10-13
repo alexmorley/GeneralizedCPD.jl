@@ -1,5 +1,9 @@
 ## Generalized Canonical Polyadic (CP) Tensor Decomposition
 
+[Alex H. Williams](http://alexhwilliams.info/)\*, [Tamara G. Kolda](http://www.sandia.gov/~tgkolda/)
+
+\*Address correspondence to alex.h.willia@gmail.com
+
 The goal of this package is to fit [CP tensor decomposition](https://en.wikipedia.org/wiki/Tensor_rank_decomposition) with any reasonable loss function. It leverages [Losses.jl](https://github.com/JuliaML/Losses.jl) to express the model and [Optim.jl](https://github.com/JuliaOpt/Optim.jl) to fit parameters.
 
 ### Installation
