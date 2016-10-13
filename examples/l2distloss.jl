@@ -10,8 +10,7 @@ data = cpd_randn(sz,nr) + ξ
 
 # model
 model = GenCPD(data, nr, L2DistLoss())
-randn!(model)
-converged,tr = fit!(model, data, AlternatingDescent())
+converged,tr = fit!(model, data)
 
 # using Plots; unicodeplots()
 # plot(tr)

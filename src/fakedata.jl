@@ -11,7 +11,7 @@ function fakedata{N,Ix<:Integer}(
 
     # add noise
     f = get_transform(loss,σ²)
-    map!(f, data, cpd)
+    map!(f, data, full(cpd))
 end
 
 function fakedata{N,Ix<:Integer,L<:SupervisedLoss}(
@@ -46,13 +46,14 @@ function get_transform(
         loss::SupervisedLoss,
         σ²::Float64
     )
+
     if typeof(loss) <: Union{LogitMarginLoss,HingeLoss}
-        f = (x) -> rand(Bernoulli(logistic(x)))
-    elseif type(loss) <: PoissonLoss
-        f = (x) -> rand(Poisson(log(x)))
-    elseif type(loss) <: L2DistLoss
-        f = (x) -> rand(Normal(x,σ²)
-    elseif type(loss) <: L1DistLoss
+        f = (x) -> rand() > logistic(x) ? 1.0 : -1.0
+    elseif typeof(loss) <: PoissonLoss
+        f = (x) -> rand(Poisson(exp(x)))
+    elseif typeof(loss) <: L2DistLoss
+        f = (x) -> rand(Normal(x,σ²))
+    elseif typeof(loss) <: L1DistLoss
         f = (x) -> rand(Laplace(x,sqrt(0.5*σ²)))
     else
         throw(ArgumentError("$loss does not have a supported noise distribution."))

@@ -11,7 +11,9 @@
 sumvalue(model::GenCPD,data::AbstractArray) = sumvalue(model.loss,model.cpd,data)
 
 function sumvalue(model::GenCPD, x::AbstractVector, data::AbstractArray)
-    sumvalue(GenCPD(x,model),data)
+    temp_model = GenCPD(data, rank(model), model.loss)
+    setparams!(temp_model, x)
+    sumvalue(temp_model, data)
 end
 
 function sumvalue!(model::GenCPD, x::AbstractVector, data::AbstractArray)

@@ -12,6 +12,7 @@ using Base.LinAlg
 using CatViews
 
 import StatsBase: fit!
+using StatsFuns
 using Optim
 import ProgressMeter
 using Parameters
@@ -42,5 +43,6 @@ include("sumvalue.jl")
 include("gradients.jl")
 include("utils.jl")
 include("fit.jl")
+include("fakedata.jl")
 
 end # module

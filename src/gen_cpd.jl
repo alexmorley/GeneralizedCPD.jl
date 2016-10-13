@@ -56,15 +56,6 @@ type GenCPD{T,N,L<:Loss,M}
     fstop::NTuple{N,Int}
     cpd::CPD{T,N}
     loss::Union{L,AbstractArray{L,M}}
-
-    # GenCPD(cpd::CPD{T,N},l::L) = new(cpd,l)
-    # function GenCPD(cpd::CPD{T,N},loss::AbstractArray{L,M})
-    #     M > N && error("loss array has too many dimensions")
-    #     for m = 1:M
-    #         size(cpd,m) != size(loss,m) && error("loss array does not match cpd along dimension $m")
-    #     end
-    #     new(cpd,loss)
-    # end
 end
 
 ## Constructors ##

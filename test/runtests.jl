@@ -1,6 +1,7 @@
 using GeneralizedCPD
 using Base.Test
-using ForwardDiff
+using Calculus
+import StatsFuns: logistic
 
 # @testset "Basic CPD constructors" begin
 #     cpd = CPD(3,(9,10,11));
@@ -25,35 +26,19 @@ using ForwardDiff
     nr = 2       # rank
     sz = (4,5,6) # dimensions
 
-    losses = [L2DistLoss(), L1DistLoss()]
-    for loss in losses
-        # create low-rank data
-        ξ = 0.1*randn(sz) # noise
-        data = full(cpd_randn(sz,nr)) + ξ
-        model = GenCPD(nr,data,L1DistLoss())
-        fill!(model.cpd.λ,1.0)
+    losses = [L2DistLoss(), L1DistLoss(), LogitMarginLoss(), HingeLoss(), PoissonLoss()]
 
-        # init model, define objective
+    for loss in losses
+        # create model
+        data = GeneralizedCPD.fakedata(sz,nr,loss)
+        model = GenCPD(data, nr, loss)
         randn!(model)
-        f(x) = sumvalue(model,x,data);
         
-        # check gradients vs ForwardDiff
-        ∇a = ForwardDiff.gradient(f,getparams(model))
+        # objective function, autodiff gradients
+        f(x) = sumvalue!(model,x,data);
+        ∇a = Calculus.gradient(f,getparams(model))
         ∇b = grad(model,data)
         @test isapprox(∇a,∇b)
-
-        # similar checks
-        xinit = copy(getparams(model))
-        x = randn(nparams(model))
-        ∇a = ForwardDiff.gradient(f,x)
-        ∇b = grad(model,x,data)
-        @test isapprox(∇a,∇b)
-        @test isapprox(xinit,getparams(model))
-        
-        # check that grad! overwrites
-        ∇c = grad!(model,x,data)
-        @test isapprox(∇a,∇c)
-        @test isapprox(x,getparams(model))
     end
 end
 
