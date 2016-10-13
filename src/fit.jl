@@ -41,23 +41,33 @@ AlternatingDescent(mo::Optim.Optimizer,o::OptimizationOptions=DEFAULT_ALT_OPTION
 function fit!{T,N,O}(
         model::GenCPD{T,N},
         data::AbstractArray{T,N},
-        meta::AlternatingDescent{O},
-        options::OptimizationOptions = OptimizationOptions(f_tol=1e-5)
+        meta::AlternatingDescent{O};
+        iterations::Int = 100,
+        f_tol::Float64 = 1e-7,
+        x_tol::Float64 = 1e-7,
+        show_trace::Bool = true,
+        show_every::Int = 1
     )
     
     dfunc = _decompose_objective(model, data)
 
-    if options.store_trace
-        tr = OptimizationState{O}[]
-    end
-
-    f_x = sumvalue(model,data) # holds objective
+    # objective and convergence
+    f_x = sumvalue(model,data)
     converged = false
+    iter = 1
 
-    for iter = 1:options.iterations
+    # objective function history
+    f_hist = Float64[]
+    sizehint!(f_hist, iterations)
+
+    # optimization loop
+    tic()
+    while iter < iterations
+        # stor previous params and 
         xprev = copy(getparams(model))
         f_x_prev = f_x
-        @show f_x
+        
+        # optimize over each subproblem
         for n = 1:N
             result = optimize(dfunc[n], copy(getparams(model,n)), meta.optimizer, meta.options)
             # # TODO - remove this check?
@@ -65,16 +75,31 @@ function fit!{T,N,O}(
             f_x = Optim.minimum(result)
         end
 
-        x_converged,f_converged,converged = assess_convergence(getparams(model), xprev, f_x, f_x_prev, options.x_tol, options.f_tol)
+        if show_trace
+            mod(iter,show_every)==0 && print_with_color(:blue,"Iteration $iter, loss  =  $(round(f_x,8))\n")
+        end
+
+        push!(f_hist, f_x)
+
+        x_converged,f_converged,converged = assess_convergence(getparams(model), xprev, f_x, f_x_prev, x_tol, f_tol)
         converged && break
+        iter += 1
+    end
+    t = toq();
+
+    if show_trace
+        converged && print_with_color(:red,"Algorithm converged ")
+        !converged && print_with_color(:red,"DID NOT CONVERGE ")
+        print_with_color(:red,"after $iter iterations\n")
+        print_with_color(:red,"Total time elapsed, $t seconds\n")
     end
 
-    return converged,tr
+    return converged,f_hist
 
 end
 
 ####
-# 
+# Function to assess convergence (similar to Optim.jl)
 function assess_convergence(x::AbstractArray,
                             x_previous::AbstractArray,
                             f_x::Real,

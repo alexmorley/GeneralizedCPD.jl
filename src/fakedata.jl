@@ -1,8 +1,8 @@
 function fakedata{N,Ix<:Integer}(
         sz::NTuple{N,Ix},
         nr::Integer,
-        loss::SupervisedLoss;
-        σ²::Float64 = 1.0
+        loss::SupervisedLoss,
+        σ²::Float64 = 0.1
     )
 
     # create random low-rank tensor
@@ -12,13 +12,15 @@ function fakedata{N,Ix<:Integer}(
     # add noise
     f = get_transform(loss,σ²)
     map!(f, data, full(cpd))
+
+    return data,cpd
 end
 
 function fakedata{N,Ix<:Integer,L<:SupervisedLoss}(
         sz::NTuple{N,Ix},
         nr::Integer,
-        loss::Array{L};
-        σ²::Float64 = 1.0
+        loss::Array{L},
+        σ²::Float64 = 0.1
     )
 
     # loss must match sz for early dimensions

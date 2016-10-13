@@ -18,14 +18,14 @@ function grad{T,N}(
     grad!(∇,model,data)
 end
 
-
 function grad(
         model::GenCPD,
         x::AbstractVector,
         data::AbstractArray
     )
-    tmp = GenCPD(x,model)
-    grad!(tmp,x,data)
+    x_copy = copy(getparams(model))
+    grad!(model,x,data)
+    setparams!(model, x_copy)
 end
 
 function grad!{T}(
