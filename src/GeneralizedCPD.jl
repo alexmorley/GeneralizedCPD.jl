@@ -14,11 +14,12 @@ using CatViews
 import StatsBase: fit!
 using Optim
 import ProgressMeter
+using Parameters
 
 # export Optimizers
 export GradientDescent,
        LBFGS,
-       AltGradDescent
+       AlternatingDescent
 
 using Reexport
 @reexport using TensorBase

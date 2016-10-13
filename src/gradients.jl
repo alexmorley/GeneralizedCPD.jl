@@ -91,17 +91,15 @@ function grad!{T,N}(
     # form estimate of unfolded tensor
     idx = [N:-1:n+1; n-1:-1:1]
 
-    B = reduce(A_kr_B, [ f' for f in factors[idx] ])
-    est = A_mul_Bt(factors[n]',B)
+    B = reduce(At_kr_Bt, [ f for f in factors[idx] ])
+    est = At_mul_Bt(factors[n],B)
 
     # unfold tensor along mode n 
     xn = unfold(data,n)
     deriv!(xn,model.loss,xn,est)
 
     # compute gradient for factor n
-    ∇_ = xn*B
-    copy!(∇,transpose(∇_))
-    return ∇
+    At_mul_Bt!(∇, B, xn)
 end
 
 function grad!{T,N}(
@@ -110,5 +108,5 @@ function grad!{T,N}(
         data::AbstractArray{T,N},
         n::Integer
     )
-    grad!(reshape(∇,size(model,n),rank(model)), model, data, n)
+    grad!(reshape(∇,rank(model),size(model,n)), model, data, n)
 end

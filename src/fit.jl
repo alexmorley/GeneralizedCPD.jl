@@ -1,19 +1,13 @@
-## ---- Use Optim.jl to fit Generalized CPD ---- ##
+## Default to AlternatingDescent method
+fit!(model::GenCPD, data::AbstractArray) = fit!(model, data, AlternatingDescent())
 
+## ---- Direct backend to Optim.jl ---- ##
 function fit!{T,N}(
         model::GenCPD{T,N},
         data::AbstractArray{T,N},
         mo::Optim.Optimizer,
         o::OptimizationOptions = OptimizationOptions()
     )
-
-    # prevent initialization at origin (it is a saddle point)
-    for fctr in model.cpd.factors
-        if vecnorm(fctr) < eps()
-            randn!(fctr)
-            # scale!(fctr,T(0.1))
-        end
-    end
 
     # generate functions for Optim
     f(x) = sumvalue!(model,x,data) # updates params before computing objective
@@ -34,35 +28,62 @@ function fit!{T,N}(
     return result
 end
 
+## ---- Alternating Descent, using Optim.jl ---- ##
+const DEFAULT_ALT_OPTIONS = OptimizationOptions(iterations=10)
 
-## ---- Custom Optimizers ---- ##
-
-# An optimizer that only knows how to fit GenCPD
-abstract GenCPDOptimizer
-
-## ---- Alternating Gradient Descent ---- ##
-
-immutable AltGradDescent <: GenCPDOptimizer
-    linesearch!::Function
+immutable AlternatingDescent{O <: Optim.Optimizer}
+    optimizer::O
+    options::OptimizationOptions
 end
-AltGradDescent(
-    ;linesearch!::Function = Optim.hz_linesearch!
-    ) = AltGradDescent(linesearch!)
+AlternatingDescent(o::OptimizationOptions=DEFAULT_ALT_OPTIONS) = AlternatingDescent{LBFGS}(LBFGS(),o)
+AlternatingDescent(mo::Optim.Optimizer,o::OptimizationOptions=DEFAULT_ALT_OPTIONS) = AlternatingDescent(mo,o)
 
-@generated function fit!{T,N}(
+function fit!{T,N,O}(
         model::GenCPD{T,N},
         data::AbstractArray{T,N},
-        mo::AltGradDescent,
-        o::OptimizationOptions = OptimizationOptions()
+        meta::AlternatingDescent{O},
+        options::OptimizationOptions = OptimizationOptions()
     )
+    
+    dfunc = _decompose_objective(model, data)
 
+    if options.store_trace
+        tr = OptimizationState{O}[]
+        meta.options.store_trace = true
+    end
+
+    tr = zeros(options.iterations)
+    for iter = 1:options.iterations
+        
+        ∇nrm = 0.0
+        converged = true
+        
+        for n = 1:N
+            tic()
+            result = optimize(dfunc[n], copy(getparams(model,n)), meta.optimizer, meta.options)
+            converged = converged && Optim.converged(result) && Optim.iterations(result)==1
+            toc()
+            # TODO - remove this check?
+            @assert isapprox(getparams(model,n), result.minimum)
+        end
+        @show sumvalue(model,data)
+        push!(tr,sumvalue(model,data))
+        converged && break
+    end
+
+    return converged,tr
+
+end
+
+####
+# Decompose the objective function along each mode of the tensor
+@generated function _decompose_objective{T,N}(
+        model::GenCPD{T,N},
+        data::AbstractArray{T,N}
+    )
   quote 
     # preallocate storage for gradients
     ∇storage = Array(T, maximum(size(model))*rank(model))
-
-    # views into paramvec and gradient for each factor
-    const x = @ntuple $N n->(Array(T, size(model,n)*rank(model)))
-    const ∇ = @ntuple $N n->(view(∇storage, 1:(rank(model)*size(model,n))))
 
     f = @ntuple $N n->((x)->begin
         setparams!(model, x, n)
@@ -83,28 +104,6 @@ AltGradDescent(
     )
     dfunc = @ntuple $N n->DifferentiableFunction(f[n],g![n],fg![n])
 
-    # gd = @ntuple $N n->GradientDescent()
-    # s = @ntuple $N n->Optim.initial_state(gd[n], o, dfunc[n], x[n])
-
-    tr = Float64[]
-    for iter = 1:10
-        @show iter
-        for n = 1:($N)
-            @show n
-            # Optim.update_state!(dfunc[n], s[n], gd[n]) && break
-            # Optim.update_g!(dfunc[n], s[n], gd[n]) 
-            # copy!(x[n], s[n].x)
-
-            result = optimize(dfunc[n], x[n], GradientDescent(), o)
-            copy!(x[n], result.minimum)
-            
-            # TODO - check if necessary
-            setparams!(model, x[n], n)
-        end
-        push!(tr,sumvalue(model,data))
-    end
-
-    return tr
-  end # quote
-
+    return dfunc
+  end
 end

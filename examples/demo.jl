@@ -7,22 +7,25 @@ sz = (50,60,70) # dimensions
 
 # create low-rank data
 ξ = 1e-6*randn(sz) # noise
-const data = cpd_randn(sz,nr) + ξ
+data = cpd_randn(sz,nr) + ξ
 
 # model
-const model = GenCPD(data, nr, L2DistLoss())
+model = GenCPD(data, nr, L2DistLoss())
 randn!(model)
-tr = fit!(model, data, AltGradDescent(), OptimizationOptions(iterations=10,show_trace=true, store_trace=true))
+converged,tr = fit!(model, data, AlternatingDescent())
 
-# plot trace
-using Plots; gr()
-tr = Optim.trace(result)
-iter = [ t.iteration for t in tr ]
-obj = [ t.value for t in tr ]
-∇nrm = [ t.g_norm for t in tr ]
+# using Plots; unicodeplots()
+# plot(tr)
 
-plot(
-    plot(iter,obj,xaxis=("iteration"),yaxis=("objective",:log)),
-    plot(iter,∇nrm,xaxis=("iteration"),yaxis=("norm of gradient",:log)),
-    legend=(nothing)
-)
+# # plot trace
+# using Plots; gr()
+# tr = Optim.trace(result)
+# iter = [ t.iteration for t in tr ]
+# obj = [ t.value for t in tr ]
+# ∇nrm = [ t.g_norm for t in tr ]
+
+# plot(
+#     plot(iter,obj,xaxis=("iteration"),yaxis=("objective",:log)),
+#     plot(iter,∇nrm,xaxis=("iteration"),yaxis=("norm of gradient",:log)),
+#     legend=(nothing)
+# )
