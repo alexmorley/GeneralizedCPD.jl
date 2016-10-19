@@ -32,6 +32,16 @@ end
 
 sumvalue(loss::Loss, cpd::CPD, data::AbstractArray) = sumvalue(loss, data, full(cpd))
 
+##########################################################################
+#                                                                        #
+# Functions to evaluate objective at individual datapoints (for          #
+# stochastic methods).                                                   #
+#                                                                        #
+##########################################################################
+
+@inline value(model::GenCPD, data::AbstractArray, idx::Integer...) = value(model.loss, model.cpd, data, idx...)
+@inline value(loss::Loss, cpd::CPD, data::AbstractArray, idx::Integer...) = value(loss, data[idx...], cpd[idx...])
+
 # @generated function sumvalue{L<:Loss,T,N}(
 #         loss::AbstractArray{L},
 #         cpd::CPD{T,N},

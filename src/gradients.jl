@@ -138,7 +138,8 @@ function sgrad{T,N}(model::GenCPD{T,N}, data::AbstractArray{T,N}, idx::Integer..
             ∇[fi[n]] = prod(fv[setdiff(1:N,n)])
         end
     end
-    scale!(∇, deriv(model.loss, data[idx...], xhat))
+    v,d = value_deriv(model.loss, data[idx...], xhat)
+    scale!(∇, d)
 
-    return ∇
+    return v, ∇
 end

@@ -26,7 +26,9 @@ using Iterators
         # stochastic gradient 
         ∇c = zeros(nparams(model))
         for idx in product(1:sz[1],1:sz[2],1:sz[3])
-            ∇c += sgrad(model, data, idx...)
+            val,∇s = sgrad(model, data, idx...)
+            ∇c += ∇s
+            @test isapprox(val,value(model,data,idx...))
         end
         @test isapprox(∇a,∇c)
         @test isapprox(∇b,∇c)

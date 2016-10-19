@@ -52,6 +52,7 @@ export GenCPD,
        nparams,
        grad,
        sgrad,
+       value,
        sumvalue,
        sumvalue!
 
