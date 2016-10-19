@@ -1,7 +1,8 @@
-julia 0.4
+julia 0.5
 Optim
 CatViews
 StatsBase
 Distributions
 Parameters
 StatsFuns
+LossFunctions

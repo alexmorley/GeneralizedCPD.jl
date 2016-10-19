@@ -23,7 +23,7 @@ export GradientDescent,
 
 using Reexport
 @reexport using TensorBase
-@reexport using Losses
+@reexport using LossFunctions
 @reexport using Distributions
 
 export GenCPD,
