@@ -23,7 +23,7 @@ function grad(
         x::AbstractVector,
         data::AbstractArray
     )
-    x_copy = copy(getparams(model))
+    x_copy = copy(params(model))
     grad!(model,x,data)
     setparams!(model, x_copy)
 end

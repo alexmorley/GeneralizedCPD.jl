@@ -14,7 +14,7 @@ let
     # objective function, autodiff gradients
     randn!(model)
     f(x) = sumvalue!(model,x,data);
-    ∇a = Calculus.gradient(f,getparams(model))
+    ∇a = Calculus.gradient(f,params(model))
     ∇b = grad(model,data)
 
     if isapprox(∇a,∇b)
@@ -37,7 +37,7 @@ let
     # objective function, autodiff gradients
     randn!(model)
     f(x) = sumvalue!(model,x,data);
-    ∇a = Calculus.gradient(f,getparams(model))
+    ∇a = Calculus.gradient(f,params(model))
     ∇b = similar(∇a)
     ∇b[1:8] = grad(model,data,1)
     ∇b[9:18] = grad(model,data,2)

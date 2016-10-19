@@ -92,7 +92,7 @@ Base.randn!{T<:AbstractFloat}(model::GenCPD{T}) = randn!(model.paramvec)
 Base.rand!{T<:AbstractFloat}(model::GenCPD{T}) = rand!(model.paramvec)
 
 ## get and set model params through paramvec ##
-getparams(model::GenCPD) = model.paramvec
+params(model::GenCPD) = model.paramvec
 nparams(model::GenCPD) = length(model.paramvec)
 
 @generated function setparams!{T,N}(model::GenCPD{T,N}, x::AbstractVector)
@@ -105,4 +105,4 @@ function setparams!{T,N}(model::GenCPD{T,N}, x::AbstractVector, n::Integer)
     copy!(model.cpd.factors[n], reshape(x, model.fdims[n]))
 end
 
-getparams{T,N}(model::GenCPD{T,N}, n::Integer) = view(model.paramvec, model.fstart[n]:model.fstop[n])
+params{T,N}(model::GenCPD{T,N}, n::Integer) = view(model.paramvec, model.fstart[n]:model.fstop[n])

@@ -19,7 +19,7 @@ using Iterators
 
         # objective function, autodiff gradients
         f(x) = sumvalue!(model,x,data);
-        ∇a = Calculus.gradient(f,getparams(model))
+        ∇a = Calculus.gradient(f,params(model))
         ∇b = grad(model,data)
         @test isapprox(∇a,∇b)
 

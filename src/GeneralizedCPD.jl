@@ -17,6 +17,11 @@ using Reexport
 # JuliaML packages
 importall LearnBase
 using LossFunctions
+import StochasticOptimization:
+              ParamUpdater,
+              Adam,
+              SGD,
+              init
 
 # JuliaStats packages
 import StatsBase: fit!
@@ -34,6 +39,11 @@ export GradientDescent,
        LBFGS,
        AlternatingDescent
 
+# export stochastic optimizers
+export ParamUpdater,
+       Adam,
+       SGD
+
 # reexport some loss functions
 export L2DistLoss,
        L1DistLoss,
@@ -48,7 +58,7 @@ export GenCPD,
        LossArray,
        fit!,
        setparams!,
-       getparams,
+       params,
        nparams,
        grad,
        sgrad,
@@ -62,6 +72,7 @@ include("sumvalue.jl")
 include("gradients.jl")
 include("utils.jl")
 include("fit.jl")
+include("stochastic_methods.jl")
 include("fakedata.jl")
 
 end # module

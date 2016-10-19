@@ -21,7 +21,7 @@ function fit!{T,N}(
     dfunc = DifferentiableFunction(f,g!,fg!)
 
     # call Optim
-    result = optimize(dfunc,getparams(model),mo,o)
+    result = optimize(dfunc,params(model),mo,o)
     
     # update parameters, return optimization results
     setparams!(model,Optim.minimizer(result))
@@ -64,14 +64,14 @@ function fit!{T,N,O}(
     tic()
     while iter < iterations
         # stor previous params and 
-        xprev = copy(getparams(model))
+        xprev = copy(params(model))
         f_x_prev = f_x
         
         # optimize over each subproblem
         for n = 1:N
-            result = optimize(dfunc[n], copy(getparams(model,n)), meta.optimizer, meta.options)
+            result = optimize(dfunc[n], copy(params(model,n)), meta.optimizer, meta.options)
             # # TODO - remove this check?
-            # @assert isapprox(getparams(model,n), result.minimum)
+            # @assert isapprox(params(model,n), result.minimum)
             f_x = Optim.minimum(result)
         end
 
@@ -81,7 +81,7 @@ function fit!{T,N,O}(
 
         push!(f_hist, f_x)
 
-        x_converged,f_converged,converged = assess_convergence(getparams(model), xprev, f_x, f_x_prev, x_tol, f_tol)
+        x_converged,f_converged,converged = assess_convergence(params(model), xprev, f_x, f_x_prev, x_tol, f_tol)
         converged && break
         iter += 1
     end
