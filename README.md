@@ -12,6 +12,6 @@ Not all of the required packages are in the official registry (yet). So try this
 
 ```julia
 Pkg.clone("https://github.com/JuliaTensors/TensorBase.jl")
-Pkg.clone("https://github.com/JuliaML/LossFunctions.jl")
+Pkg.add("https://github.com/JuliaML/LossFunctions.jl")
 Pkg.clone("https://github.com/ahwillia/GeneralizedCPD.jl")
 ```
