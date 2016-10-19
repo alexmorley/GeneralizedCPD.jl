@@ -7,25 +7,40 @@ Alex H. Williams¹, Tamara G. Kolda²\n
 """
 module GeneralizedCPD
 
+# basic utils
 using Base.Cartesian
 using Base.LinAlg
 using CatViews
+using Parameters
+using Reexport
 
+# JuliaML packages
+using LossFunctions
+
+# JuliaStats packages
 import StatsBase: fit!
 using StatsFuns
+using Distributions
+
+# JuliaTensors packages
+@reexport using TensorBase
+
+# JuliaOpt packages
 using Optim
-using Parameters
 
 # export Optimizers
 export GradientDescent,
        LBFGS,
        AlternatingDescent
 
-using Reexport
-@reexport using TensorBase
-@reexport using LossFunctions
-@reexport using Distributions
+# reexport some loss functions
+export L2DistLoss,
+       L1DistLoss,
+       LogitMarginLoss,
+       HingeLoss,
+       PoissonLoss
 
+# reexport main functionality
 export GenCPD,
        GenCPDParams,
        GenCPDFit,
@@ -35,8 +50,10 @@ export GenCPD,
        getparams,
        nparams,
        grad,
+       sumvalue,
        sumvalue!
 
+# generalized cpd code
 include("gen_cpd.jl")
 include("sumvalue.jl")
 include("gradients.jl")
