@@ -15,6 +15,7 @@ using Parameters
 using Reexport
 
 # JuliaML packages
+importall LearnBase
 using LossFunctions
 
 # JuliaStats packages
