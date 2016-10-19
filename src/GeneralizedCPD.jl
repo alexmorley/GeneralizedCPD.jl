@@ -51,6 +51,7 @@ export GenCPD,
        getparams,
        nparams,
        grad,
+       sgrad,
        sumvalue,
        sumvalue!
 

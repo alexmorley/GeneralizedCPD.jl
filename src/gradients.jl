@@ -110,3 +110,35 @@ function grad!{T,N}(
     )
     grad!(reshape(∇,rank(model),size(model,n)), model, data, n)
 end
+
+
+
+#######################################################################################
+# Functions to evaluate stochastic estimates of the gradient for the full generalized #
+# CPD model.                                                                          #
+#                                                                                     #
+#    sgrad(model, data)          # gradient w.r.t. current model at random index      #
+#    sgrad(model, data, idx...)  # gradient w.r.t. current model at specified index   #
+#                                                                                     #
+#######################################################################################
+
+@generated function sgrad{T,N}(model::GenCPD{T,N}, data::AbstractArray{T,N})
+    :( sgrad(model, data, @ntuple($N, n->rand(1:size(data,n)))...) )
+end
+
+function sgrad{T,N}(model::GenCPD{T,N}, data::AbstractArray{T,N}, idx::Integer...)
+    F = model.cpd.factors
+    ∇ = spzeros(nparams(model))
+    xhat = zero(T)
+    for r = 1:rank(model)
+        fv = [ F[n][r,idx[n]] for n=1:N ]
+        fi = [ vecidx(F[n],r,idx[n]) for n=1:N ]
+        xhat += prod(fv)
+        for n = 1:N
+            ∇[fi[n]] = prod(fv[setdiff(1:N,n)])
+        end
+    end
+    scale!(∇, deriv(model.loss, data[idx...], xhat))
+
+    return ∇
+end
